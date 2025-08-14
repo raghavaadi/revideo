@@ -19,7 +19,7 @@ export interface ShaderConfig {
    * #include "@revideo/core/shaders/common.glsl"
    *
    * void main() {
-   *     out_color = texture(core_source_tx, source_uv);
+   *     outColor = texture(sourceTexture, sourceUV);
    * }
    * ```
    */
@@ -105,12 +105,19 @@ export function parseShader(
     result = [value];
   }
 
-  if (!useScene().experimentalFeatures && result.length > 0) {
-    result = [];
-    useLogger().log({
-      ...experimentalLog(`Node uses experimental shaders.`),
-      inspect: this.key,
-    });
+  // Check experimental features only if we're in a scene context
+  try {
+    const scene = useScene();
+    if (!scene.experimentalFeatures && result.length > 0) {
+      result = [];
+      useLogger().log({
+        ...experimentalLog(`Node uses experimental shaders.`),
+        inspect: this.key,
+      });
+    }
+  } catch (e) {
+    // If we're not in a scene context, skip the experimental features check
+    // This can happen during initialization or when accessing shaders outside of rendering
   }
 
   return result;

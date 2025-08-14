@@ -161,7 +161,7 @@ export abstract class GeneratorScene<T>
       await DependencyContext.consumePromises();
       context.save();
       context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-      await this.draw(context);
+      this.execute(() => this.draw(context));
       context.restore();
     } while (DependencyContext.hasPromises() && iterations < 10);
 
@@ -276,7 +276,7 @@ export abstract class GeneratorScene<T>
     this.previousScene = previousScene;
     this.previousOnTop = false;
     this.runner = threads(
-      () => this.runnerFactory(this.getView()),
+      () => this.execute(() => this.runnerFactory(this.getView())),
       thread => {
         this.thread.current = thread;
       },
@@ -361,6 +361,29 @@ export abstract class GeneratorScene<T>
     startPlayback(this.playback);
     try {
       result = callback();
+    } finally {
+      endPlayback(this.playback);
+      endScene(this);
+    }
+
+    return result;
+  }
+
+  /**
+   * Invoke the given async callback in the context of this scene.
+   *
+   * @remarks
+   * This method makes sure that the context of this scene is globally available
+   * during the execution of the async callback.
+   *
+   * @param callback - The async callback to invoke.
+   */
+  protected async executeAsync<T>(callback: () => Promise<T>): Promise<T> {
+    let result: T;
+    startScene(this);
+    startPlayback(this.playback);
+    try {
+      result = await callback();
     } finally {
       endPlayback(this.playback);
       endScene(this);

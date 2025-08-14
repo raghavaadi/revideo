@@ -25,7 +25,8 @@ export function usePluginState() {
 }
 
 export function Provider({children}: {children?: ComponentChildren}) {
-  const {inspection} = useApplication();
+  const application = useApplication();
+  const inspection = application?.inspection;
   const currentScene = useCurrentScene();
 
   const state = useMemo(() => {
@@ -70,6 +71,7 @@ export function Provider({children}: {children?: ComponentChildren}) {
   );
 
   useSignalEffect(() => {
+    if (!inspection) return;
     const {key, payload} = inspection.value;
     if (key === NodeInspectorKey) {
       state.selectedKey.value = payload as string;
@@ -77,6 +79,7 @@ export function Provider({children}: {children?: ComponentChildren}) {
   });
 
   useSignalEffect(() => {
+    if (!inspection) return;
     const nodeKey = state.selectedKey.value;
     const {key, payload} = inspection.peek();
 
