@@ -1,0 +1,111 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 0.10.5)'
+        required: true
+        default: '0.10.5'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build all packages
+      run: |
+        echo "Building all packages..."
+        npm run core:build
+        npm run 2d:build
+        npm run renderer:build
+        npm run vite-plugin:build
+        
+    - name: Prepare for GitHub distribution
+      run: |
+        VERSION=${{ github.event.inputs.version || github.ref_name }}
+        VERSION=${VERSION#v}  # Remove 'v' prefix if present
+        ./prepare-github-release.sh $VERSION
+        
+    - name: Create tarball of built packages
+      run: |
+        tar -czf revideo-packages.tar.gz \
+          packages/core/lib \
+          packages/core/package.json \
+          packages/core/shaders \
+          packages/2d/lib \
+          packages/2d/editor \
+          packages/2d/package.json \
+          packages/renderer/lib \
+          packages/renderer/package.json \
+          packages/vite-plugin/lib \
+          packages/vite-plugin/package.json
+          
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: built-packages
+        path: |
+          packages/*/lib
+          packages/*/package.json
+          packages/2d/editor
+          packages/core/shaders
+          
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Download build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: built-packages
+        
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          revideo-packages.tar.gz
+        body: |
+          ## Installation
+          
+          To use this release in your project, add to your `package.json`:
+          
+          ```json
+          {
+            "dependencies": {
+              "@revideo/core": "github:raghavaadi/revideo#${{ github.ref_name }}",
+              "@revideo/2d": "github:raghavaadi/revideo#${{ github.ref_name }}",
+              "@revideo/renderer": "github:raghavaadi/revideo#${{ github.ref_name }}"
+            }
+          }
+          ```
+          
+          Or install directly:
+          ```bash
+          npm install github:raghavaadi/revideo#${{ github.ref_name }}
+          ```
+          
+          ## Changes
+          See [CHANGELOG.md](https://github.com/raghavaadi/revideo/blob/main/CHANGELOG.md) for details.
+        draft: false
+        prerelease: false

@@ -1,6 +1,6 @@
 {
   "name": "@revideo/ui",
-  "version": "0.10.4",
+  "version": "0.10.5",
   "description": "A visual editor for revideo",
   "main": "dist/main.js",
   "types": "dist/main.d.ts",

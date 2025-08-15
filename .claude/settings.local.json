@@ -11,8 +11,26 @@
       "Bash(git clone:*)",
       "Bash(npm start)",
       "Bash(grep:*)",
-      "Bash(true)"
+      "Bash(true)",
+      "Bash(git checkout:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git tag:*)",
+      "Bash(npm install:*)",
+      "Bash(chmod:*)",
+      "Bash(pkill:*)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(git push:*)",
+      "WebSearch",
+      "Bash(./build-all.sh)",
+      "Bash(npm ls:*)"
     ],
-    "deny": []
+    "deny": [],
+    "defaultMode": "acceptEdits",
+    "additionalDirectories": [
+      "/Users/raghavaadithya/Desktop/shader/src/shaders",
+      "/Users/raghavaadithya/Desktop/shader/src/scenes",
+      "/Users/raghavaadithya/Desktop/shader"
+    ]
   }
 }

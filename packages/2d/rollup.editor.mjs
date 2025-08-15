@@ -12,17 +12,19 @@ export default [
     },
     external: [/^@revideo/, /^@?preact/, './index.css'],
     plugins: [
-      resolve(),
-      postcss({
-        modules: true,
-        extract: true,
-      }),
       typescript({
         tsconfig: './src/editor/tsconfig.build.json',
         compilerOptions: {
           outDir: './editor',
           composite: false,
         },
+      }),
+      resolve({
+        extensions: ['.ts', '.tsx', '.js', '.jsx'],
+      }),
+      postcss({
+        modules: true,
+        extract: true,
       }),
     ],
   },
