@@ -286,7 +286,15 @@ export class Video extends Media {
     this.drawShape(context);
     const alpha = this.alpha();
     if (alpha > 0) {
-      const video = await this.seekFunction();
+      // Get video synchronously without breaking execution context
+      let video: CanvasImageSource;
+      try {
+        // First try to get video synchronously if possible
+        video = this.playing() ? this.fastSeekedVideo() : this.seekedVideo();
+      } catch {
+        // Fallback to async seek if needed
+        video = await this.seekFunction();
+      }
 
       const box = BBox.fromSizeCentered(this.computedSize());
       context.save();

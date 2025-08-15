@@ -164,10 +164,7 @@ export class Txt extends Shape {
       if (child instanceof Txt || child instanceof TxtLeaf) {
         result.push(child);
       } else if (typeof child === 'string') {
-        // Create TxtLeaf with current parent's context
-        const leaf = new TxtLeaf({text: child});
-        leaf.parent(this);
-        result.push(leaf);
+        result.push(new TxtLeaf({text: child}));
       }
     }
 

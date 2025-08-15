@@ -534,9 +534,16 @@ export class Node implements Promisable<Node> {
   public readonly creationStack?: string;
 
   public constructor({children, spawner, key, ...rest}: NodeProps) {
-    const scene = useScene2D();
-    [this.key, this.unregister] = scene.registerNode(this, key);
-    this.view2D = scene.getView();
+    try {
+      const scene = useScene2D();
+      [this.key, this.unregister] = scene.registerNode(this, key);
+      this.view2D = scene.getView();
+    } catch {
+      // Fallback when scene context is not available (e.g., during rendering)
+      this.key = key ?? 'unknown';
+      this.unregister = () => {}; // No-op unregister function
+      this.view2D = null as any; // Will be set later when scene is available
+    }
     this.creationStack = new Error().stack;
     initializeSignals(this, rest);
     if (spawner) {
@@ -1474,10 +1481,17 @@ export class Node implements Promisable<Node> {
 
   @computed()
   protected parentWorldSpaceCacheBBox(): BBox {
-    return (
-      this.findAncestor(node => node.requiresCache())?.worldSpaceCacheBBox() ??
-      new BBox(Vector2.zero, useScene2D().getSize())
-    );
+    const ancestor = this.findAncestor(node => node.requiresCache());
+    if (ancestor) {
+      return ancestor.worldSpaceCacheBBox();
+    }
+    
+    try {
+      return new BBox(Vector2.zero, useScene2D().getSize());
+    } catch {
+      // Fallback to a reasonable default size
+      return new BBox(Vector2.zero, new Vector2(1920, 1080));
+    }
   }
 
   /**
@@ -1546,8 +1560,14 @@ export class Node implements Promisable<Node> {
       return null;
     }
 
-    const scene = useScene2D();
-    const size = scene.getRealSize();
+    let scene, size;
+    try {
+      scene = useScene2D();
+      size = scene.getRealSize();
+    } catch {
+      // Fallback if scene context not available
+      return null;
+    }
     const parentCacheRect = this.parentWorldSpaceCacheBBox();
     const cameraToWorld = new DOMMatrix()
       .scaleSelf(
